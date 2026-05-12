@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BACKEND_DIR / ".env")
 
+# On Vercel the filesystem is read-only except /tmp
+_VERCEL = bool(os.getenv("VERCEL"))
+_STORAGE_BASE = Path("/tmp/nexvision") if _VERCEL else BACKEND_DIR
+
 
 class Settings:
     # Qwen / DashScope
@@ -36,10 +40,10 @@ class Settings:
         o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()
     ]
 
-    # Storage
-    storage_dir: Path = BACKEND_DIR / "storage"
-    uploads_dir: Path = BACKEND_DIR / "storage" / "uploads"
-    files_index: Path = BACKEND_DIR / "storage" / "files.json"
+    # Storage (ephemeral on Vercel serverless — /tmp is writable but resets on cold start)
+    storage_dir: Path = _STORAGE_BASE / "storage"
+    uploads_dir: Path = _STORAGE_BASE / "storage" / "uploads"
+    files_index: Path = _STORAGE_BASE / "storage" / "files.json"
 
 
 @lru_cache
