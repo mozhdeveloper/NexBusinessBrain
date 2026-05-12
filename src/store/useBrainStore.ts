@@ -117,13 +117,6 @@ export const useBrainStore = create<BrainState>((set, get) => ({
   },
 
   uploadFile: async (file: File) => {
-    // Guard: reject if same filename already exists in KB
-    const { files } = get()
-    if (files.some((f) => f.name === file.name && f.status !== 'error')) {
-      set({ lastError: `"${file.name}" is already in the Knowledge Base.` })
-      return
-    }
-
     // Optimistic placeholder
     const tempId = `tmp-${Date.now()}`
     const placeholder: FileRecord = {
@@ -134,7 +127,12 @@ export const useBrainStore = create<BrainState>((set, get) => ({
       size: `${Math.round(file.size / 1024)} KB`,
       ext: (file.name.split('.').pop()?.toLowerCase() ?? 'other') as FileRecord['ext'],
     }
-    set((s) => ({ files: [placeholder, ...s.files] }))
+    // Remove any existing record with the same name (backend will auto-replace)
+    set((s) => ({
+      files: [placeholder, ...s.files.filter((f) => f.name !== file.name)],
+      // Clear chat so users aren't confused by responses from the old file
+      messages: [],
+    }))
 
     try {
       const created = await api.uploadFile(file)
@@ -155,7 +153,7 @@ export const useBrainStore = create<BrainState>((set, get) => ({
 
   deleteFile: async (id: string) => {
     const prev = get().files
-    set({ files: prev.filter((f) => f.id !== id) })
+    set({ files: prev.filter((f) => f.id !== id), messages: [] })
     try {
       if (!id.startsWith('tmp-')) {
         await api.deleteFile(id)

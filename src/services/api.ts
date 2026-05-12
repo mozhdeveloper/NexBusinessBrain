@@ -198,6 +198,8 @@ const _sim = {
   health: async (): Promise<boolean> => true,
 
   uploadFile: async (file: File): Promise<ApiFileRecord> => {
+    // Auto-replace any existing file with the same name
+    _simFiles = _simFiles.filter((f) => f.name !== file.name)
     const id = `sim-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     const record: ApiFileRecord = {
       id,

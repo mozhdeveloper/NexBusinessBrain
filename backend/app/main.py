@@ -67,13 +67,23 @@ def upload_file(background: BackgroundTasks, file: UploadFile = File(...)) -> Fi
     # Ensure uploads dir exists (required on Vercel where /tmp may be empty)
     settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Duplicate check ────────────────────────────────────────────────────
+    # ── Duplicate check: auto-replace same-named file ─────────────────────
     existing = file_store.list_files()
-    if any(f.name == safe_name for f in existing):
-        raise HTTPException(
-            status_code=409,
-            detail=f'"{safe_name}" is already in the Knowledge Base. Delete it first to re-upload.',
-        )
+    duplicate = next((f for f in existing if f.name == safe_name), None)
+    if duplicate:
+        logger.info("Auto-replacing duplicate file '%s' (old id=%s)", safe_name, duplicate.id)
+        # Remove old vectors from Pinecone using stored node IDs
+        try:
+            get_engine().delete_file(duplicate.id, node_ids=duplicate.node_ids or None)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Vector delete for duplicate failed: %s", exc)
+        # Remove old file from disk
+        for p in settings.uploads_dir.glob(f"{duplicate.id}__*"):
+            try:
+                p.unlink()
+            except Exception:
+                pass
+        file_store.delete_file_record(duplicate.id)
 
     file_id = f"f-{uuid.uuid4().hex[:10]}"
     dest = settings.uploads_dir / f"{file_id}__{safe_name}"
@@ -99,8 +109,9 @@ def upload_file(background: BackgroundTasks, file: UploadFile = File(...)) -> Fi
 def _ingest_in_background(path: Path, file_id: str, file_name: str) -> None:
     try:
         engine = get_engine()
-        chunks = engine.ingest_file(path, file_id, file_name)
-        logger.info("Indexed %s with %d chunks", file_name, chunks)
+        chunks, node_ids = engine.ingest_file(path, file_id, file_name)
+        logger.info("Indexed %s with %d chunks (%d vectors)", file_name, chunks, len(node_ids))
+        file_store.update_node_ids(file_id, node_ids)
         file_store.update_status(file_id, "indexed")
     except Exception as exc:  # noqa: BLE001
         logger.exception("Ingestion failed for %s: %s", file_name, exc)
@@ -120,8 +131,9 @@ def delete_file(file_id: str) -> dict:
         except Exception:
             pass
 
+    # Remove vectors from Pinecone using stored node IDs for reliability
     try:
-        get_engine().delete_file(file_id)
+        get_engine().delete_file(file_id, node_ids=record.node_ids or None)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Vector delete failed: %s", exc)
 
@@ -135,7 +147,16 @@ def delete_file(file_id: str) -> dict:
 def chat(req: ChatRequest) -> ChatResponse:
     try:
         engine = get_engine()
-        return engine.chat(req.question, session_id=req.session_id, history=req.conversation_history)
+        # Only retrieve from currently indexed files — prevents stale vectors
+        # from deleted files or orphaned Pinecone data (e.g. after cold start)
+        # from bleeding into responses.
+        active_ids = [f.id for f in file_store.list_files() if f.status == "indexed"]
+        return engine.chat(
+            req.question,
+            session_id=req.session_id,
+            history=req.conversation_history,
+            file_ids=active_ids or None,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.exception("Chat failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Chat failed: {exc}")

@@ -86,6 +86,17 @@ def update_status(file_id: str, status: FileStatus, error: Optional[str] = None)
         return FileRecord(**raw)
 
 
+def update_node_ids(file_id: str, node_ids: list[str]) -> None:
+    """Persist Pinecone vector IDs so we can delete them by ID later."""
+    with _lock:
+        data = _read_all()
+        raw = data.get(file_id)
+        if raw:
+            raw["node_ids"] = node_ids
+            data[file_id] = raw
+            _write_all(data)
+
+
 def delete_file_record(file_id: str) -> Optional[FileRecord]:
     with _lock:
         data = _read_all()

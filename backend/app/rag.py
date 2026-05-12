@@ -21,6 +21,7 @@ from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.schema import NodeWithScore
+from llama_index.core.vector_stores.types import MetadataFilter, MetadataFilters, FilterOperator
 from llama_index.embeddings.dashscope import (
     DashScopeEmbedding,
     DashScopeTextEmbeddingModels,
@@ -148,8 +149,8 @@ class RagEngine:
 
     # -- ingestion --------------------------------------------------------
 
-    def ingest_file(self, file_path: Path, file_id: str, file_name: str) -> int:
-        """Parse, chunk, embed, and upsert a single file. Returns chunk count."""
+    def ingest_file(self, file_path: Path, file_id: str, file_name: str) -> tuple[int, list[str]]:
+        """Parse, chunk, embed, and upsert a single file. Returns (chunk_count, node_ids)."""
         docs = parse_file(file_path)
         for d in docs:
             d.metadata = {
@@ -171,7 +172,10 @@ class RagEngine:
             }
 
         if not nodes:
-            return 0
+            return 0, []
+
+        # Capture node IDs before insertion (LlamaIndex uses these as Pinecone vector IDs)
+        node_ids = [n.node_id for n in nodes]
 
         # Insert into the existing index → embeds + upserts to Pinecone
         self.index.insert_nodes(nodes)
@@ -179,12 +183,27 @@ class RagEngine:
         # Track usage: rough token estimate (avg 350 tokens per chunk)
         get_counter().increment("embed_tokens", len(nodes) * 350)
 
-        return len(nodes)
+        return len(nodes), node_ids
 
-    def delete_file(self, file_id: str) -> None:
-        """Remove all vectors for a given file_id from Pinecone."""
+    def delete_file(self, file_id: str, node_ids: Optional[list[str]] = None) -> None:
+        """Remove all vectors for a file from Pinecone.
+
+        Prefers deletion by stored node IDs (reliable on serverless Pinecone).
+        Falls back to metadata filter delete if no IDs are available.
+        """
+        if node_ids:
+            try:
+                # Batch delete in chunks of 100 (Pinecone API limit)
+                for i in range(0, len(node_ids), 100):
+                    self.pinecone_index.delete(ids=node_ids[i : i + 100])
+                logger.info("Deleted %d vectors for file %s by ID", len(node_ids), file_id)
+                return
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Pinecone delete-by-id failed for %s, trying filter: %s", file_id, exc)
+        # Fallback: metadata filter (works on pod indexes; may not work on serverless)
         try:
             self.pinecone_index.delete(filter={"file_id": {"$eq": file_id}})
+            logger.info("Deleted vectors for file %s via metadata filter", file_id)
         except Exception as exc:  # noqa: BLE001
             logger.warning("Pinecone delete failed for %s: %s", file_id, exc)
 
@@ -211,8 +230,23 @@ class RagEngine:
         question: str,
         session_id: str = "default",
         history: Optional[list[ConversationMessage]] = None,
+        file_ids: Optional[list[str]] = None,
     ) -> ChatResponse:
-        retriever = self.index.as_retriever(similarity_top_k=5)
+        # Scope retrieval to only the currently active files to prevent stale vectors
+        # from deleted or orphaned uploads (e.g. after a Vercel cold start) from bleeding in.
+        if file_ids:
+            filters = MetadataFilters(
+                filters=[
+                    MetadataFilter(
+                        key="file_id",
+                        operator=FilterOperator.IN,
+                        value=file_ids,
+                    )
+                ]
+            )
+            retriever = self.index.as_retriever(similarity_top_k=5, filters=filters)
+        else:
+            retriever = self.index.as_retriever(similarity_top_k=5)
         nodes: list[NodeWithScore] = retriever.retrieve(question)
 
         context_blocks: list[str] = []

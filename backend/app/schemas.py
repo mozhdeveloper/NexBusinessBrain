@@ -16,6 +16,7 @@ class FileRecord(BaseModel):
     size: str
     ext: FileExt
     error: Optional[str] = None
+    node_ids: list[str] = Field(default_factory=list)  # Pinecone vector IDs for reliable delete
 
 
 class ConversationMessage(BaseModel):
@@ -27,6 +28,7 @@ class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1)
     session_id: str = Field(default="default")
     conversation_history: list[ConversationMessage] = Field(default_factory=list)
+    file_ids: list[str] = Field(default_factory=list)  # active file IDs to scope retrieval
 
 
 class SourceCitation(BaseModel):
