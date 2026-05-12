@@ -69,24 +69,43 @@ function toRecord(api: ApiFileRecord): FileRecord {
 }
 
 // Polling for "processing" files
+// Track when each file entered processing state so we can time out gracefully.
+const _processingStart: Record<string, number> = {}
+const PROCESSING_TIMEOUT_MS = 3 * 60 * 1000 // 3 minutes max for ingestion
+
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
-function ensurePolling(getState: () => BrainState, refresh: () => Promise<void>) {
+function ensurePolling(
+  getState: () => BrainState,
+  refresh: () => Promise<void>,
+  markError: (id: string, error: string) => void,
+) {
   if (pollTimer) return
   pollTimer = setInterval(async () => {
     const { files } = getState()
-    if (!files.some((f) => f.status === 'processing' || f.status === 'uploading')) {
-      if (pollTimer) {
-        clearInterval(pollTimer)
-        pollTimer = null
-      }
+    const pending = files.filter((f) => f.status === 'processing' || f.status === 'uploading')
+
+    if (pending.length === 0) {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
+      Object.keys(_processingStart).forEach((k) => delete _processingStart[k])
       return
     }
-    try {
-      await refresh()
-    } catch {
-      /* ignore transient errors */
+
+    const now = Date.now()
+    for (const f of pending) {
+      if (!_processingStart[f.id]) _processingStart[f.id] = now
     }
+
+    // Mark any file that has been processing longer than the timeout as errored
+    const timedOut = pending.filter(
+      (f) => now - (_processingStart[f.id] ?? now) > PROCESSING_TIMEOUT_MS,
+    )
+    for (const f of timedOut) {
+      markError(f.id, 'Processing timed out. The file may be too large for the server.')
+      delete _processingStart[f.id]
+    }
+
+    try { await refresh() } catch { /* ignore transient errors */ }
   }, 2000)
 }
 
@@ -140,7 +159,13 @@ export const useBrainStore = create<BrainState>((set, get) => ({
         files: [toRecord(created), ...s.files.filter((f) => f.id !== tempId)],
         lastError: null,
       }))
-      ensurePolling(get, get().refreshFiles)
+      ensurePolling(
+        get,
+        get().refreshFiles,
+        (id, error) => set((s) => ({
+          files: s.files.map((f) => f.id === id ? { ...f, status: 'error' as const, error } : f),
+        })),
+      )
     } catch (err) {
       set((s) => ({
         files: s.files.map((f) =>
@@ -167,6 +192,14 @@ export const useBrainStore = create<BrainState>((set, get) => ({
     const trimmed = content.trim()
     if (!trimmed) return
 
+    // Build history BEFORE adding the current user message to state — if we
+    // captured it after the set() below the current question would appear
+    // both in conversation_history and in the question field, causing the
+    // LLM to see the same question twice and produce confusing answers.
+    const history = get()
+      .messages.filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
     const userMsg: Message = {
       id: `u-${Date.now()}`,
       role: 'user',
@@ -174,10 +207,6 @@ export const useBrainStore = create<BrainState>((set, get) => ({
       timestamp: Date.now(),
     }
     set((s) => ({ messages: [...s.messages, userMsg], isAiResponding: true }))
-
-    const history = get()
-      .messages.filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({ role: m.role, content: m.content }))
 
     try {
       const resp = await api.sendChat(trimmed, history)

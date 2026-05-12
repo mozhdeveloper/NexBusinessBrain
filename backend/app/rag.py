@@ -207,12 +207,30 @@ class RagEngine:
         except Exception as exc:  # noqa: BLE001
             logger.warning("Pinecone delete failed for %s: %s", file_id, exc)
 
-    def reset_index(self) -> None:
-        """Delete all vectors in the index."""
-        try:
-            self.pinecone_index.delete(delete_all=True)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Pinecone reset failed: %s", exc)
+    def reset_index(self, node_ids: Optional[list[str]] = None) -> None:
+        """Delete all vectors in the index.
+
+        Prefers deletion by stored node IDs (required on serverless Pinecone,
+        which does NOT support delete_all=True).  Falls back to delete_all for
+        pod-based indexes when no IDs are available.
+        """
+        if node_ids:
+            try:
+                for i in range(0, len(node_ids), 100):
+                    self.pinecone_index.delete(ids=node_ids[i : i + 100])
+                logger.info("Reset: deleted %d vectors by ID", len(node_ids))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Reset delete-by-id failed, trying delete_all: %s", exc)
+                try:
+                    self.pinecone_index.delete(delete_all=True)
+                except Exception as exc2:  # noqa: BLE001
+                    logger.warning("Pinecone delete_all also failed: %s", exc2)
+        else:
+            # No known IDs — attempt delete_all (only works on pod indexes)
+            try:
+                self.pinecone_index.delete(delete_all=True)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Pinecone reset failed (no node_ids available): %s", exc)
         self._memories.clear()
 
     # -- chat -------------------------------------------------------------
@@ -268,12 +286,15 @@ class RagEngine:
                 seen_files.add(fname)
 
         memory = self.get_memory(session_id)
+        # Always rebuild memory from the frontend-supplied history so that
+        # Vercel cold-start instances (which have empty in-memory state)
+        # answer with the correct conversation context.  We reset the buffer
+        # and re-populate from the canonical history the client maintains.
+        memory.reset()
         if history:
-            # Sync provided history into memory (simple replace on new sessions)
-            if not memory.get():
-                for h in history:
-                    role = MessageRole.USER if h.role == "user" else MessageRole.ASSISTANT
-                    memory.put(ChatMessage(role=role, content=h.content))
+            for h in history:
+                role = MessageRole.USER if h.role == "user" else MessageRole.ASSISTANT
+                memory.put(ChatMessage(role=role, content=h.content))
 
         history_text = self._format_history(memory.get())
         context_text = "\n\n---\n\n".join(context_blocks) if context_blocks else "[No documents indexed yet.]"

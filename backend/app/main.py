@@ -64,6 +64,14 @@ def upload_file(background: BackgroundTasks, file: UploadFile = File(...)) -> Fi
 
     safe_name = Path(file.filename).name
 
+    # Validate extension
+    allowed_ext = {".pdf", ".txt", ".md", ".docx", ".csv"}
+    if Path(safe_name).suffix.lower() not in allowed_ext:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type. Allowed: {', '.join(sorted(allowed_ext))}",
+        )
+
     # Ensure uploads dir exists (required on Vercel where /tmp may be empty)
     settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 
@@ -91,6 +99,15 @@ def upload_file(background: BackgroundTasks, file: UploadFile = File(...)) -> Fi
     with dest.open("wb") as fh:
         shutil.copyfileobj(file.file, fh)
     size_bytes = dest.stat().st_size
+
+    # Reject files over 10 MB — large files cause Vercel background-task timeouts
+    MAX_BYTES = 10 * 1024 * 1024
+    if size_bytes > MAX_BYTES:
+        dest.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large ({file_store.format_size(size_bytes)}). Maximum is 10 MB.",
+        )
 
     record = FileRecord(
         id=file_id,
@@ -147,15 +164,29 @@ def delete_file(file_id: str) -> dict:
 def chat(req: ChatRequest) -> ChatResponse:
     try:
         engine = get_engine()
-        # Only retrieve from currently indexed files — prevents stale vectors
-        # from deleted files or orphaned Pinecone data (e.g. after cold start)
-        # from bleeding into responses.
+        # Scope retrieval to currently indexed files only.
         active_ids = [f.id for f in file_store.list_files() if f.status == "indexed"]
+
+        # If no files are indexed, return a helpful response immediately —
+        # no Pinecone query needed and we avoid accidentally retrieving
+        # orphaned vectors left over from previous sessions.
+        if not active_ids:
+            return ChatResponse(
+                answer="No documents are currently indexed in your Knowledge Base. "
+                       "Please upload at least one file and wait for it to finish processing.",
+                summary="No indexed documents found.",
+                sources=[],
+                recommended_action="Upload a PDF, DOCX, TXT, MD, or CSV file to the Knowledge Base.",
+                missing_info="Knowledge Base is empty.",
+                confidence=0.0,
+                model_used=engine.settings.qwen_llm_model,
+            )
+
         return engine.chat(
             req.question,
             session_id=req.session_id,
             history=req.conversation_history,
-            file_ids=active_ids or None,
+            file_ids=active_ids,
         )
     except Exception as exc:  # noqa: BLE001
         logger.exception("Chat failed: %s", exc)
@@ -167,10 +198,16 @@ def chat(req: ChatRequest) -> ChatResponse:
 
 @app.post("/reset")
 def reset_all() -> dict:
+    # Collect all stored vector IDs before clearing the file store so the
+    # Pinecone reset can delete them by ID (serverless Pinecone does not
+    # support delete_all=True, which would silently leave old vectors behind).
+    all_files = file_store.list_files()
+    all_node_ids = [nid for f in all_files for nid in (f.node_ids or [])]
+
     file_store.reset_all_records()
     get_counter().reset_all()
     try:
-        get_engine().reset_index()
+        get_engine().reset_index(node_ids=all_node_ids or None)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Vector reset failed: %s", exc)
     return {"ok": True}
