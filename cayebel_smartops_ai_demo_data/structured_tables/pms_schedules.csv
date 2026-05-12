@@ -1,0 +1,5 @@
+pms_id,client_id,equipment_id,last_pms_date,next_pms_date,pms_status,assigned_technician,recommended_action
+PMS-001,CAY-C001,EQ-1001,2026-01-10,2026-05-10,Due Soon,Leo Santos,Book PMS before warranty claim risk increases.
+PMS-002,CAY-C002,EQ-2001,2025-12-12,2026-03-12,Overdue,Mika Reyes,Urgent calibration and inspection needed.
+PMS-003,CAY-C003,EQ-3001,2026-02-01,2026-05-01,Overdue,Leo Santos,"Schedule field service and inspect motor, camera, and cable system."
+PMS-004,CAY-C006,EQ-6001,2026-02-10,2026-05-10,Due Soon,Rico Tan,Check engine hours. Service required around 1000 hours.

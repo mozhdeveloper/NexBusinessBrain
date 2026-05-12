@@ -1,0 +1,25 @@
+{
+  "sales_follow_up": {
+    "new_inquiry_contact_within_hours": 24,
+    "quotation_follow_up_days": 3,
+    "high_priority_no_reply_days": 7,
+    "manager_review_negotiation_inactive_days": 10,
+    "high_value_deal_php": 500000,
+    "high_value_follow_up_days": 5
+  },
+  "pms_rules": {
+    "surveying_equipment_months": 6,
+    "materials_testing_months": "3 to 6",
+    "utilities_field_equipment_months": 3,
+    "mobile_equipment_engine_hours": 1000,
+    "mobile_equipment_months": 3
+  },
+  "service_priority": [
+    "Active service contract clients",
+    "Warranty-sensitive cases",
+    "Equipment down / cannot operate",
+    "Regular PMS clients",
+    "Non-contract walk-in requests"
+  ],
+  "ai_rule": "AI may recommend actions but must not automatically update records in MVP."
+}

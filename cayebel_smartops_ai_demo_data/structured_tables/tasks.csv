@@ -1,0 +1,7 @@
+task_id,client_id,deal_id,assigned_to,task_type,due_date,status,priority,notes
+T-001,CAY-C001,D-001,Dianne Santos,Follow-up Call,2026-05-02,Pending,High,Follow up on negotiation and offer technical demo.
+T-002,CAY-C002,D-002,Marco Lim,Quotation Follow-up,2026-04-25,Overdue,High,Quotation sent. No reply after 7 days.
+T-003,CAY-C003,D-003,Dianne Santos,Discovery Call,2026-04-15,Overdue,Medium,Discuss GPS data integration requirements.
+T-004,CAY-C004,D-004,Erica Cruz,Quotation Follow-up,2026-04-17,Overdue,High,Procurement asked for revised price but no update sent.
+T-005,CAY-C005,D-005,Marco Lim,Reactivation Message,2026-04-05,Overdue,Low,Inactive for over 30 days.
+T-006,CAY-C006,D-006,Erica Cruz,Post-Sale Check-in,2026-06-01,Pending,Medium,Check satisfaction after first PMS package.

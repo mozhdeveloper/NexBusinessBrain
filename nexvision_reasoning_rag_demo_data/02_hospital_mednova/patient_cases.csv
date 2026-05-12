@@ -1,0 +1,4 @@
+case_id,patient_name,service,appointment_status,payment_php,cancellation_notice_hours,hmo_status,refund_request
+MN-P001,Ana Santos,MRI Scan,No-show,8500,0,Self-pay,Yes
+MN-P002,Roberto Cruz,Outpatient Surgery,Cancelled,25000,30,Approved,Yes
+MN-P003,Liza Dela Peña,Emergency Admission,Admitted,0,,Pending,No

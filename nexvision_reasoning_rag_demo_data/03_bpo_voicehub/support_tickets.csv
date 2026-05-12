@@ -1,0 +1,4 @@
+ticket_id,customer_issue,risk,agent,account,status
+VH-T001,Customer asked for supervisor 3 times regarding delayed refund,Medium,Mika Reyes,E-Commerce,Open
+VH-T002,Customer reports unauthorized transaction,High,Paolo Lim,Fintech,Open
+VH-T003,Customer asks for package tracking update,Low,Nina Garcia,E-Commerce,Resolved

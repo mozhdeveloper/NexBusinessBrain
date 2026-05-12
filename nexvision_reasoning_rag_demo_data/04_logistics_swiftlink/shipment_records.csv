@@ -1,0 +1,5 @@
+tracking_no,customer,service_type,status,delay_hours,parcel_value_php,damage_reported,failed_attempts
+SL-1001,MediCare Supplies,Medical Delivery,Delayed,6,12000,No,0
+SL-1002,Juan Dela Cruz,Express Delivery,Delayed,55,2500,No,0
+SL-1003,ABC Trading,Standard Parcel,Damaged Delivered,0,18000,Yes within 12 hours,0
+SL-1004,Maria Lopez,Standard Parcel,Failed Delivery,0,1000,No,3

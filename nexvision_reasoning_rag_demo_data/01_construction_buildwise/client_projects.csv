@@ -1,0 +1,4 @@
+client_id,client_name,project,status,contract_value_php,project_manager,latest_issue,variation_estimate_php,risk_level,payment_status
+BW-C001,Northgate Warehouse Corp,Warehouse Expansion,Ongoing,4500000,Ramon Cruz,Client requested additional loading bay,185000,Medium,60% paid
+BW-C002,Alto Retail Group,Mall Store Fit-Out,Delayed,1200000,Jessa Lim,Imported ceiling panels delayed,0,High,40% paid
+BW-C003,VistaMed Clinic,Clinic Renovation,For Turnover,980000,Carlo Reyes,Client requested extra storage cabinet,22000,Low,90% paid

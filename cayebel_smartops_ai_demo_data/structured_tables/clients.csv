@@ -1,0 +1,7 @@
+client_id,company_name,industry,city,client_tier,status,account_owner,main_contact,contact_role,email,phone,last_interaction_date,notes
+CAY-C001,MetroBuild Construction Corp,Construction,Quezon City,A,Active,Dianne Santos,Engr. Paulo Reyes,Project Director,paulo.reyes@metrobuildup.example,0917-111-2401,2026-04-24,High-value account. Interested in total station upgrade and PMS package.
+CAY-C002,Northline Materials Testing Laboratory,Materials Testing,Makati,A,Active,Marco Lim,Dr. Karen Villanueva,Laboratory Head,karen.v@northlinelab.example,0917-222-9182,2026-04-18,Needs calibration reminders and service history visibility.
+CAY-C003,AquaGrid Utilities Inc,Utilities Infrastructure,Pasig,B,Active,Dianne Santos,Rafael Tan,Operations Manager,rafael.tan@aquagrid.example,0917-333-7055,2026-04-05,Uses field equipment heavily. Good candidate for GPS and engine-hour monitoring.
+CAY-C004,PrimeRoad Engineering Services,Road Construction,Pampanga,B,Prospect,Erica Cruz,Engr. Miguel Soriano,Procurement Manager,miguel.s@primeroad.example,0917-444-3300,2026-04-10,Quotation sent. No follow-up completed yet.
+CAY-C005,SkySurvey Geomatics,Surveying,Cebu,B,Active,Marco Lim,Anna Mae Garcia,Survey Department Head,anna.garcia@skysurvey.example,0917-555-4422,2026-03-28,Inactive for more than 30 days. Good target for reactivation campaign.
+CAY-C006,Delta Heavy Equipment Rentals,Equipment Rental,Laguna,C,Active,Erica Cruz,Joey Mendoza,Fleet Supervisor,joey.m@deltaheavy.example,0917-666-9871,2026-04-27,Asking about preventive maintenance contracts for rented machines.

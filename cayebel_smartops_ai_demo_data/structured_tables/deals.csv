@@ -1,0 +1,7 @@
+deal_id,client_id,deal_title,stage,deal_value_php,assigned_salesperson,quotation_date,last_activity_date,next_follow_up_date,status
+D-001,CAY-C001,Total Station Upgrade Package,Negotiation,850000,Dianne Santos,2026-04-20,2026-04-24,2026-05-02,Open
+D-002,CAY-C002,Annual Calibration and PMS Contract,Quotation,320000,Marco Lim,2026-04-12,2026-04-18,2026-04-25,Open
+D-003,CAY-C003,GPS Fleet Tracking Integration,Inquiry,580000,Dianne Santos,,2026-04-05,2026-04-15,Open
+D-004,CAY-C004,Road Testing Equipment Supply,Quotation,450000,Erica Cruz,2026-04-10,2026-04-10,2026-04-17,Open
+D-005,CAY-C005,GNSS Receiver Add-on Accessories,Contacted,120000,Marco Lim,,2026-03-28,2026-04-05,Open
+D-006,CAY-C006,Preventive Maintenance Service Package,Closed,210000,Erica Cruz,2026-04-22,2026-04-27,2026-06-01,Closed

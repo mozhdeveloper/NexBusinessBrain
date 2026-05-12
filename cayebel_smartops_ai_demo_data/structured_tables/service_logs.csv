@@ -1,0 +1,5 @@
+service_id,client_id,equipment_id,service_date,service_type,findings,status,technician
+S-001,CAY-C001,EQ-1001,2026-01-10,PMS,Calibration drift corrected. Battery terminal cleaned.,Completed,Leo Santos
+S-002,CAY-C002,EQ-2001,2025-12-12,Calibration,Load cell reading slightly unstable. Recommend next check within 90 days.,Completed,Mika Reyes
+S-003,CAY-C003,EQ-3001,2026-02-01,PMS,Camera lens cleaned. Cable wear noted. Engine hours approaching 1000 threshold.,Completed,Leo Santos
+S-004,CAY-C006,EQ-6001,2026-02-10,Inspection,Generator stable. Replace air filter on next PMS.,Completed,Rico Tan

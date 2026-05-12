@@ -1,0 +1,8 @@
+equipment_id,client_id,equipment_name,category,serial_no,purchase_date,warranty_end,last_pms_date,next_pms_date,status,gps_tracker_id,engine_hours
+EQ-1001,CAY-C001,Total Station TS-900,Surveying Equipment,TS900-MB-2219,2024-08-14,2026-08-14,2026-01-10,2026-05-10,Due Soon,,
+EQ-1002,CAY-C001,GNSS Receiver GR-500,Surveying Equipment,GR500-MB-8841,2025-02-11,2027-02-11,2026-02-20,2026-08-20,Active,,
+EQ-2001,CAY-C002,Universal Testing Machine UTM-1000,Materials Testing,UTM1000-NL-3100,2023-10-02,2025-10-02,2025-12-12,2026-03-12,Overdue PMS,,
+EQ-2002,CAY-C002,Concrete Compression Machine CCM-500,Materials Testing,CCM500-NL-5150,2024-05-19,2026-05-19,2026-01-22,2026-07-22,Active,,
+EQ-3001,CAY-C003,Pipe Inspection Rover PIR-200,Utilities Infrastructure,PIR200-AG-7781,2024-11-03,2026-11-03,2026-02-01,2026-05-01,Overdue PMS,GPS-AG-3001,1042
+EQ-3002,CAY-C003,Flow Meter FM-88,Utilities Infrastructure,FM88-AG-1212,2025-06-15,2027-06-15,2026-03-01,2026-09-01,Active,,
+EQ-6001,CAY-C006,Mobile Generator MG-350,Fleet Equipment,MG350-DH-1902,2025-09-08,2027-09-08,2026-02-10,2026-05-10,Due Soon,GPS-DH-6001,985

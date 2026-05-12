@@ -1,0 +1,67 @@
+{
+  "construction": {
+    "variation_order_approval": [
+      {
+        "condition": "amount <= 25000",
+        "approver": "Project Manager"
+      },
+      {
+        "condition": "25001 <= amount <= 100000",
+        "approver": "Operations Manager"
+      },
+      {
+        "condition": "amount > 100000",
+        "approver": "COO"
+      },
+      {
+        "condition": "affects structural safety",
+        "approver": "Engineering Head review required regardless of cost"
+      }
+    ],
+    "work_rule": "No variation work may proceed without signed client approval."
+  },
+  "hospital": {
+    "refund_approval": [
+      {
+        "condition": "amount <= 5000",
+        "approver": "Billing Supervisor"
+      },
+      {
+        "condition": "5001 <= amount <= 30000",
+        "approver": "Finance Manager"
+      },
+      {
+        "condition": "amount > 30000",
+        "approver": "Hospital Administrator"
+      }
+    ],
+    "emergency_rule": "Emergency patients must receive care even if billing documents are incomplete."
+  },
+  "bpo": {
+    "escalation_rules": [
+      "Customer asks for supervisor more than twice",
+      "Customer threatens legal action",
+      "Customer reports fraud or unauthorized transaction",
+      "Customer is abusive after warning",
+      "Agent lacks authority"
+    ],
+    "quality_rule": "Agents scoring below 85% for two consecutive weeks require Team Leader coaching."
+  },
+  "logistics": {
+    "claims_approval": [
+      {
+        "condition": "claim < 3000",
+        "approver": "Claims Supervisor"
+      },
+      {
+        "condition": "3001 <= claim <= 20000",
+        "approver": "Operations Manager"
+      },
+      {
+        "condition": "claim > 20000",
+        "approver": "General Manager"
+      }
+    ],
+    "delay_rule": "Delay ticket required after 24 hours; express delivery refund review after 48 hours."
+  }
+}
