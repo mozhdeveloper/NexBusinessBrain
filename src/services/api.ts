@@ -1,8 +1,9 @@
 ﻿// NexVision RAG API client
 // Set VITE_USE_SIMULATION=false + VITE_API_BASE_URL=https://your-backend to use real backend
 
-const BASE_URL =
+const BASE_URL = (
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8000'
+).replace(/\/+$/, '') // strip trailing slash to avoid double-slash URLs
 
 // true  → all calls are handled locally (no network, works on Vercel/local with no backend)
 // false → all calls go to BASE_URL
