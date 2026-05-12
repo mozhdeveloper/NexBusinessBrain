@@ -46,6 +46,7 @@ def _read_all() -> dict:
 
 def _write_all(data: dict) -> None:
     settings = get_settings()
+    settings.files_index.parent.mkdir(parents=True, exist_ok=True)
     settings.files_index.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
@@ -99,11 +100,12 @@ def reset_all_records() -> None:
         _write_all({})
         # Remove uploaded files from disk
         settings = get_settings()
-        for f in settings.uploads_dir.glob("*"):
-            try:
-                f.unlink()
-            except Exception:
-                pass
+        if settings.uploads_dir.exists():
+            for f in settings.uploads_dir.glob("*"):
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
 
 
 def now_iso() -> str:

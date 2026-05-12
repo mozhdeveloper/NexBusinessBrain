@@ -64,6 +64,9 @@ def upload_file(background: BackgroundTasks, file: UploadFile = File(...)) -> Fi
 
     safe_name = Path(file.filename).name
 
+    # Ensure uploads dir exists (required on Vercel where /tmp may be empty)
+    settings.uploads_dir.mkdir(parents=True, exist_ok=True)
+
     # ── Duplicate check ────────────────────────────────────────────────────
     existing = file_store.list_files()
     if any(f.name == safe_name for f in existing):
